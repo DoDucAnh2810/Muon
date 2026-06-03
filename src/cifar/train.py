@@ -21,6 +21,10 @@ import torch.nn.functional as F
 
 from data import build_loaders
 from model import wrn_28_10
+
+# shared optimizer lives in ../common
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "common"))
 from muon import Muon, split_params_for_muon
 
 

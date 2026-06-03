@@ -19,15 +19,23 @@ log test-set metrics throughout training, and compare:
 
 ## Files
 
-| File              | Purpose                                                       |
-| ----------------- | ------------------------------------------------------------- |
-| `data.py`         | CIFAR-10 loader (from local `cifar-10-batches-py/`) + augment |
-| `model.py`        | Wide ResNet 28-10 (~36.5 M parameters)                        |
-| `muon.py`         | Muon optimizer (Newton-Schulz orthogonalization) + param split |
-| `train.py`        | Single-config training loop with per-step CSV logging         |
-| `sweep.py`        | Grid driver over `(batch_size, momentum, seed)`               |
-| `plot.py`         | Curves, heatmap, and sample-efficiency plots                  |
-| `requirements.txt`| Python dependencies                                           |
+The Python sources live under `src/`, grouped by experiment, with the shared
+Muon optimizer in `src/common/`:
+
+| File                          | Purpose                                                       |
+| ----------------------------- | ------------------------------------------------------------- |
+| `src/common/muon.py`          | Muon optimizer (Newton-Schulz orthogonalization) + param split |
+| `src/cifar/data.py`           | CIFAR-10 loader (from local `cifar-10-batches-py/`) + augment |
+| `src/cifar/model.py`          | Wide ResNet 28-10 (~36.5 M parameters)                        |
+| `src/cifar/train.py`          | Single-config training loop with per-step CSV logging         |
+| `src/cifar/sweep.py`          | Grid driver over `(batch_size, momentum, seed)`               |
+| `src/cifar/plot.py`           | Curves, heatmap, and sample-efficiency plots                  |
+| `src/lm/{model_lm,train_lm,plot_lm}.py`       | From-scratch GPT on Tiny Shakespeare (Muon vs. AdamW) |
+| `src/finetune/{train_finetune,plot_finetune}.py` | Fine-tuning a pretrained HuggingFace LLM (Muon vs. AdamW) |
+| `requirements.txt`            | Python dependencies                                           |
+
+Run scripts directly from the repository root (e.g. `python src/cifar/train.py …`);
+each training script adds `src/common/` to its import path automatically.
 
 Non-2D parameters (biases, BatchNorm, stem conv, final classifier) are trained
 with AdamW; Muon updates only the hidden 2D / 4D weight matrices, as in the
@@ -47,7 +55,7 @@ scripts (already present in this repository).
 ### Single training run
 
 ```bash
-python train.py --batch-size 128 --momentum 0.95 --epochs 10 \
+python src/cifar/train.py --batch-size 128 --momentum 0.95 --epochs 10 \
     --log-csv runs/bs128_m0p95.csv
 ```
 
@@ -58,7 +66,7 @@ steps for the same number of passes over the data.
 ### Full sweep
 
 ```bash
-python sweep.py --epochs 10 \
+python src/cifar/sweep.py --epochs 10 \
     --batch-sizes 64,128,256,512 \
     --momenta 0.8,0.9,0.95,0.98 \
     --out-dir runs/
@@ -71,7 +79,7 @@ preview commands, `--seeds 0,1,2` for multiple seeds.
 ### Plotting
 
 ```bash
-python plot.py --runs-dir runs --out-dir figs --x-axis epoch --target 0.85
+python src/cifar/plot.py --runs-dir runs --out-dir figs --x-axis epoch --target 0.85
 ```
 
 `--x-axis` controls the curve plots: `step` (default), `samples_seen`, or
@@ -104,6 +112,6 @@ sizes; the largest batch sizes need more VRAM.
 PyTorch does not ship Muon in `torch.optim` (as of early 2026). Third-party
 implementations exist (`pytorch-optimizer` package, Keller Jordan's reference
 repo), but for a *study of* the optimizer it is more transparent to keep the
-implementation in-repo (`muon.py`, ~50 lines). This makes the Newton-Schulz
+implementation in-repo (`src/common/muon.py`, ~50 lines). This makes the Newton-Schulz
 iteration, the Nesterov path, and the RMS scaling visible — and therefore
 swappable — when interpreting sweep results.

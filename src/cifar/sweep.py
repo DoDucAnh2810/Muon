@@ -92,7 +92,7 @@ def main() -> None:
             continue
 
         cmd = [
-            sys.executable, "train.py",
+            sys.executable, str(Path(__file__).resolve().parent / "train.py"),
             "--batch-size", str(bs),
             "--momentum", str(mom),
             "--muon-lr", str(args.muon_lr),

@@ -21,6 +21,10 @@ import torch
 import torch.nn.functional as F
 
 from model_lm import GPT, split_params_for_muon_gpt
+
+# shared optimizer lives in ../common
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "common"))
 from muon import Muon
 
 DATA_URL = "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"

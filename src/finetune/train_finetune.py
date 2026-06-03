@@ -24,6 +24,9 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+# shared optimizer lives in ../common
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "common"))
 from muon import Muon
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
